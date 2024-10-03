@@ -1,0 +1,15 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* Esto asegura que no haya scroll innecesario */
+}
+
+#root,
+.ant-layout {
+  height: 100%;
+  border: none; /* Elimina cualquier borde */
+  margin: 0;
+  padding: 0;
+}
