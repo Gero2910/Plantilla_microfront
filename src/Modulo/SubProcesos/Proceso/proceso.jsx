@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -9,70 +8,63 @@ import {
 import {
   Button,
   Layout,
-  Menu,
   Input,
-  Space,
   Divider,
   Typography,
 } from "antd";
-import "../Plantilla/plantilla.css"
-import DataTable from "../DataTable/dataTable.jsx"
+import "./procesos.css"
+import DataTable from "../../DataTable/dataTable.jsx"
+import SubMenu from "../../SubMenu/menu.jsx"
 const { Search } = Input;
 const { Title } = Typography;
 
-const { Header, Sider, Content } = Layout;
+const { Header,  Content } = Layout;
 const App = () => {
   const [userData, setUserData] = useState(null); // Estado para almacenar los datos del usuario
   const [updateFlag, setUpdateFlag] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedPage, setSelectedPage] = useState("1"); // almacena la pagina seleccionada
 
-  // Escuchar el evento 'userLoggedIn' del Event Bus
   useEffect(() => {
-    // Intentamos recuperar los datos desde localStorage primero
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
-      setUserData(JSON.parse(storedUserData)); // Establecer los datos del usuario desde localStorage
+      setUserData(JSON.parse(storedUserData));
     }
 
-    // Escuchar el evento 'userLoggedIn' desde el Event Bus
     window.eventBus.on("userLoggedIn", (data) => {
-      console.log("Datos recibidos en el administrador:", data);
-      setUserData(data); // Actualizar los datos del usuario cuando se emite el evento
+      setUserData(data);
     });
 
     return () => {
-      // Limpiamos la suscripción al desmontar el componente
       window.eventBus.off("userLoggedIn");
     };
   }, []);
 
-
   const regresarMenu = () => {
-    limpiar();
+    //limpiar();
     window.history.pushState(null, "", "/menu");
   };
+
+  const renderContent = () => {
+    switch (selectedPage) {
+      case "1":
+        return <DataTable />;
+      default:
+        return <div>Seleccione una opción del menu</div>;
+    }
+  };
+
   return (
     <Layout style={{ border: "none", height: "100vh" }}>
-      <Sider trigger={null} collapsible collapsed={collapsed}>
-        <div classnombre="demo-logo-vertical" />
-        <Menu
-          theme="dark"
-          mode="inline"
-          defaultSelectedKeys={["1"]}
-          items={[
-            {
-              key: "1",
-              icon: <UserOutlined />,
-              label: "USUARIO",
-            },
-          ]}
-        />
-      </Sider>
+      <SubMenu
+        collapsed={collapsed}
+        onSelectPage={(key) => setSelectedPage(key)} // Actualizar la página seleccionada
+      />
       <Layout>
         <Header
           style={{
             padding: 0,
-            background: "#000", // Cambié el fondo a negro
+            background: "#000",
             display: "flex",
             alignItems: "center",
           }}
@@ -97,7 +89,6 @@ const App = () => {
               marginRight: "15px",
             }}
           >
-            {/* Mostrar los datos del usuario recibidos por el Event Bus */}
             <Title
               level={3}
               style={{ color: "white", margin: "0", fontSize: "13px" }}
@@ -105,7 +96,6 @@ const App = () => {
               <UserOutlined />
               <Divider type="vertical" style={{ borderColor: "#FFF" }} />
               {userData ? userData.nombre : "Cargando..."}{" "}
-              {/* Mostrar el nombre del usuario */}
             </Title>
             <Button
               type="primary"
@@ -115,18 +105,19 @@ const App = () => {
             ></Button>
           </div>
         </Header>
+
         <Content
           style={{
-            margin: 0, 
-            padding: 0, 
-            maxHeight: "100vh", 
+            margin: 0,
+            padding: 0,
+            maxHeight: "100vh",
             background: "#fff",
             border: "none",
           }}
         >
-          {/* <Table columns={columns} dataSource={customers} /> */}
-          <DataTable/>
+          {renderContent()}
         </Content>
+
       </Layout>
     </Layout>
   );
