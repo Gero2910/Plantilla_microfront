@@ -18,7 +18,7 @@ import SubMenu from "../../SubMenu/menu.jsx"
 const { Search } = Input;
 const { Title } = Typography;
 
-const { Header,  Content } = Layout;
+const { Header, Content } = Layout;
 const App = () => {
   const [userData, setUserData] = useState(null); // Estado para almacenar los datos del usuario
   const [updateFlag, setUpdateFlag] = useState(false);
@@ -67,6 +67,7 @@ const App = () => {
             background: "#000",
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
           <Button
@@ -84,9 +85,8 @@ const App = () => {
             style={{
               display: "flex",
               justifyContent: "flex-end",
-              marginTop: "5px",
-              marginBottom: "5px",
-              marginRight: "15px",
+              alignItems: "center", // Centra verticalmente
+              marginRight: "15px", // Añadir margen derecho para separarlo del borde
             }}
           >
             <Title
