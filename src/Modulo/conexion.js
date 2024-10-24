@@ -16,7 +16,11 @@ const conexionProceso = {
   listadoParametros: async (params) => {
     try {
       const response = await axios.get(`${apiUrlVisor}/segmentacionproyecto`, {
-        params: { plaza: params.plaza, desarrollo: params.desarrollo, etapa: params.etapa },
+        params: {
+          plaza: params.plaza,
+          desarrollo: params.desarrollo,
+          etapa: params.etapa,
+        },
       });
       return response.data.body;
     } catch (error) {
@@ -28,7 +32,7 @@ const conexionProceso = {
   crearUsuario: async (data) => {
     // Aquí recibes `data`, que contiene el payload para el POST
     try {
-      const response = await axios.post(`${apiUrlCatalogos}/crearUsuario`, data);
+      const response = await axios.post(`${apiUrlVisor}/crearUsuario`, data);
       return response.data;
     } catch (error) {
       console.error("Error al crear usuario", error);
@@ -39,7 +43,10 @@ const conexionProceso = {
   // Ejemplo de un PUT
   actualizarCentroCostos: async (id, data) => {
     try {
-      const response = await axios.put(`${apiUrlCatalogos}/centrocostos/${id}`, data);
+      const response = await axios.put(
+        `${apiUrlVisor}/centrocostos/${id}`,
+        data
+      );
       return response.data;
     } catch (error) {
       console.error("Error al actualizar centro de costos", error);
@@ -50,14 +57,13 @@ const conexionProceso = {
   // Ejemplo de un DELETE
   eliminarUsuario: async (id) => {
     try {
-      const response = await axios.delete(`${apiUrlCatalogos}/usuarios/${id}`);
+      const response = await axios.delete(`${apiUrlVisor}/usuarios/${id}`);
       return response.data;
     } catch (error) {
       console.error("Error al eliminar usuario", error);
       return null;
     }
-  }
-  // Puedes agregar más procesos y métodos según sea necesario
+  },
 };
 
 const conexion = async (proc, params = null, data = null) => {
