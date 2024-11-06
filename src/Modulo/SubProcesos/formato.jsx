@@ -9,6 +9,7 @@ import { Button, Layout, Input, Divider, Typography } from "antd";
 import "./formato.css";
 import SubMenu from "../SubMenu/menu.jsx";
 import Proceso from "../SubProcesos/Proceso/proceso.jsx";
+import Proceso2 from "../SubProcesos/procesos_2/proceso_2.jsx";
 const { Search } = Input;
 const { Title } = Typography;
 
@@ -74,6 +75,15 @@ const App = () => {
       case "1":
         return (
           <Proceso
+            menu={selectedPage}
+            plaza={idPlaza}
+            desarrollo={idDesarrollo}
+            etapa={idEtapa}
+          />
+        );
+      case "2":
+        return (
+          <Proceso2
             menu={selectedPage}
             plaza={idPlaza}
             desarrollo={idDesarrollo}

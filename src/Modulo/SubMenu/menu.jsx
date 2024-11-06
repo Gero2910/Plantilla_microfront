@@ -17,6 +17,10 @@ const SubMenu = ({ collapsed, onSelectPage }) => {
             key: "1",
             label: "SUB PROCESO",
           },
+          {
+            key: "2",
+            label: "SUB PROCESO 2",
+          },
         ]}
       />
     </Sider>

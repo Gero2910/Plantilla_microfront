@@ -4,7 +4,7 @@ import { createStyles } from "antd-style";
 import Highlighter from "react-highlight-words";
 import { SearchOutlined, FileExcelOutlined } from "@ant-design/icons";
 import * as XLSX from "xlsx";
-import conexion from "../conexion";
+import conexion from "../../conexion";
 import "../DataTable/dataTable.css";
 
 const useStyle = createStyles(({ css, token }) => {
@@ -55,7 +55,6 @@ const DataTable = ({
   const [columns, setColumns] = useState([]);
   /*filtros*/
   const [searchText, setSearchText] = useState("");
-  const [updateFlag, setUpdateFlag] = useState(false);
   const [searchedColumn, setSearchedColumn] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const searchInput = useRef(null);
@@ -76,14 +75,7 @@ const DataTable = ({
     try {
       switch (tipo) {
         case "1":
-          response = await conexion("listadoEscrituracion", {
-            plaza,
-            desarrollo,
-            etapa,
-          });
-          break;
-        case "2":
-          response = await conexion("listadoOtrosIngresos", {
+          response = await conexion("listadoParametros", {
             plaza,
             desarrollo,
             etapa,
@@ -93,43 +85,24 @@ const DataTable = ({
           console.error("Tipo de datos no soportado");
           return;
       }
-      const formattedData = response.map((item) => ({
-        ...item,
-      }));
+      let formattedData = response.map((item) => ({ ...item }));
+      formattedData = replaceNullWithZero(formattedData);
+      
       setCustomers(formattedData);
       setFilteredData(formattedData);
-      // Generar columnas dinámicamente
       if (formattedData.length > 0) {
         const generatedColumns = Object.keys(formattedData[0]).map((key) => ({
-          title: key.replace(/_/g, " ").toUpperCase(),
+          title: key.replace(/nom_/g, " ").toUpperCase(),
           dataIndex: key,
           key: key,
           ...getColumnSearchProps(key),
           onHeaderCell: () => ({
-            style: { whiteSpace: "nowrap" }, // Evitar que los títulos se envuelvan
+            style: { whiteSpace: "nowrap" },
           }),
           width: 200,
           ellipsis: true,
+          align: detectDataType(formattedData, key) === "number" ? "right" : "center",
         }));
-
-        //* Añadir la columna de acciones si es necesario*
-        // generatedColumns.push({
-        //     title: "Acciones",
-        //     key: "acciones",
-        //     render: (record) => (
-        //         <Space size="middle">
-        //             <Button
-        //                 icon={<EditOutlined />}
-        //                 onClick={() => mostrarModalEditarUsuario(record)}
-        //             ></Button>
-        //             <Button
-        //                 icon={<UserDeleteOutlined />}
-        //                 onClick={() => mostrarModalElimiar(record)}
-        //                 danger
-        //             ></Button>
-        //         </Space>
-        //     ),
-        // });
 
         setColumns(generatedColumns);
       }
@@ -138,87 +111,68 @@ const DataTable = ({
     }
   };
 
+  const detectDataType = (data, key) => {
+    const firstNonNullValue = data.find((item) => item[key] !== null)?.[key];
+    return typeof firstNonNullValue === "number" ? "number" : "text";
+  };
+
+  const replaceNullWithZero = (data) => {
+    return data.map(item => {
+      const newItem = {};
+      for (let key in item) {
+        newItem[key] = item[key] === null ? 0 : item[key];
+      }
+      return newItem;
+    });
+  };
+
+
   const getColumnSearchProps = (dataIndex) => ({
-    filterDropdown: ({
-      setSelectedKeys,
-      selectedKeys,
-      confirm,
-      clearFilters,
-      close,
-    }) => (
-      <div
-        style={{
-          padding: 8,
-        }}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+
         <Input
           ref={searchInput}
           placeholder={`Buscar ${dataIndex}`}
           value={selectedKeys[0]}
-          onChange={(e) =>
+          onChange={(e) => {
             setSelectedKeys(e.target.value ? [e.target.value] : [])
-          }
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-          style={{
-            marginBottom: 8,
-            display: "block",
           }}
+          style={{ marginBottom: 8, display: "block" }}
         />
+
         <Space>
           <Button
             type="primary"
             onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
             icon={<SearchOutlined />}
             size="small"
-            style={{
-              width: 90,
-            }}
+            style={{ width: 90 }}
           >
             Buscar
           </Button>
+
           <Button
-            onClick={() => clearFilters && handleReset(clearFilters)}
+            onClick={() => clearFilters && handleReset(clearFilters, confirm)}
             size="small"
-            style={{
-              width: 90,
-            }}
+            style={{ width: 90 }}
           >
-            Reset
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              close();
-            }}
-          >
-            Cerrar
+            Limpiar
           </Button>
         </Space>
       </div>
     ),
     filterIcon: (filtered) => (
-      <SearchOutlined
-        style={{
-          color: filtered ? "#1677ff" : undefined,
-        }}
-      />
+      <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
     ),
-    onFilter: (value, record) =>
-      record[dataIndex].toString().toLowerCase().includes(value.toLowerCase()),
-    onFilterDropdownOpenChange: (visible) => {
-      if (visible) {
-        setTimeout(() => searchInput.current?.select(), 100);
-      }
+    onFilter: (value, record) => {
+      const recordValue = record[dataIndex];
+      return recordValue ? recordValue.toString().toLowerCase().includes(value.toLowerCase()) : false;
     },
     render: (text) =>
       searchedColumn === dataIndex ? (
         <Highlighter
-          highlightStyle={{
-            backgroundColor: "#ffc069",
-            padding: 0,
-          }}
+          highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
           searchWords={[searchText]}
           autoEscape
           textToHighlight={text ? text.toString() : ""}
@@ -229,39 +183,53 @@ const DataTable = ({
   });
 
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
-    confirm();
     setSearchText(selectedKeys[0]);
     setSearchedColumn(dataIndex);
+    const filtered = customers.filter((item) =>
+      item[dataIndex]?.toString().toLowerCase().includes(selectedKeys[0].toLowerCase())
+    );
+    setFilteredData(filtered);
+    confirm();
   };
-  const handleReset = (clearFilters) => {
+
+  const handleReset = (clearFilters, confirm) => {
     clearFilters();
     setSearchText("");
+    setSearchedColumn("");
     setFilteredData(customers);
+
+    if (confirm) {
+      confirm();
+    }
   };
 
+  useEffect(() => {
+    if (searchText === "" && searchedColumn === "") {
+      setFilteredData(customers); // Restore original data
+    }
+  }, [searchText, searchedColumn, customers]);
+
+
+  useEffect(() => {
+    setFilteredData(customers);
+  }, [customers]);
+
   const exportExcel = () => {
-    // Extraer los títulos de las columnas
     const headers = columns.map((column) => column.title);
 
-    // Extraer los campos (dataIndex) correspondientes a cada columna
     const dataIndexes = columns.map((column) => column.dataIndex);
 
-    // Crear los datos para Excel incluyendo el encabezado
     const data = [
-      headers, // Primera fila: Títulos de las columnas
+      headers,
       ...filteredData.map((customer) =>
         dataIndexes.map((index) => customer[index] || "")
-      ), // Las demás filas: Datos filtrados
+      ),
     ];
 
-    // Crear hoja de trabajo a partir de los datos
     const worksheet = XLSX.utils.aoa_to_sheet(data);
-
-    // Crear el libro y añadir la hoja
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Prueba");
 
-    // Escribir el archivo Excel
     XLSX.writeFile(workbook, "prueba.xlsx");
   };
 
@@ -297,6 +265,7 @@ const DataTable = ({
             </div>
           )}
           rowClassName={() => "custom-row"}
+          locale={{ emptyText: "No se encontraron resultados" }}
         />
       </div>
     </div>
