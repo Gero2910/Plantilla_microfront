@@ -1,8 +1,10 @@
 import axios from "axios";
 
-const apiUrlVisor = "http://192.168.0.60:5000/api/v1/planeacionestrategica";
-const apiUrlFinanzas = "http://192.168.0.60:5000/api/v1/gestionadministracionfinanzas";
+const apiUrlVisor = process.env.REACT_API_URL_PLANEACIONESTRATEGICA;
+const apiUrlFinanzas = process.env.REACT_API_URL_GESTIONFINANZAS;
 
+console.log(apiUrlVisor);
+console.log(apiUrlFinanzas);
 // Mapeo de funciones para cada proceso (proc)
 const conexionProceso = {
   listado: async () => {
