@@ -30,6 +30,18 @@ const App = () => {
     const storedUserData = localStorage.getItem("userData");
     if (storedUserData) {
       setUserData(JSON.parse(storedUserData));
+    } else if (!storedUserData) {
+      localStorage.clear();
+      if (window.eventBus) {
+        window.eventBus.emit("userLoggedOut");
+      }
+      window.history.pushState(null, "", "/login");
+      window.location.reload();
+      return;
+    }
+    if (!idPlaza) {
+      window.history.pushState(null, "", "/menu");
+      window.location.reload();
     }
 
     window.eventBus.on("userLoggedIn", (data) => {
@@ -58,7 +70,52 @@ const App = () => {
       window.eventBus.off("etapaSelected");
     };
   }, []);
+  // Actualizar timestamp al detectar actividad del usuario
+  useEffect(() => {
+    const updateTimestamp = () => {
+      const userData = JSON.parse(localStorage.getItem("userData"));
+      if (userData) {
+        userData.timestamp = new Date().getTime();
+        localStorage.setItem("userData", JSON.stringify(userData));
+      }
+    };
 
+    // Registrar eventos para monitorear la actividad del usuario
+    window.addEventListener("mousemove", updateTimestamp);
+    window.addEventListener("click", updateTimestamp);
+    window.addEventListener("keydown", updateTimestamp);
+
+    // Limpiar eventos al desmontar el componente
+    return () => {
+      window.removeEventListener("mousemove", updateTimestamp);
+      window.removeEventListener("click", updateTimestamp);
+      window.removeEventListener("keydown", updateTimestamp);
+    };
+  }, []);
+
+  // Verificar si la sesión ha expirado
+  useEffect(() => {
+    const checkSessionExpiration = () => {
+      const storedUserData = localStorage.getItem("userData");
+      if (storedUserData) {
+        const parsedUserData = JSON.parse(storedUserData);
+        const currentTime = new Date().getTime();
+        if (currentTime - parsedUserData.timestamp > 15 * 60 * 1000) {
+          localStorage.clear();
+          if (window.eventBus) {
+            window.eventBus.emit("userLoggedOut");
+          }
+          window.history.pushState(null, "", "/login");
+          window.location.reload();
+        }
+      }
+    };
+
+    // Verificar expiración cada minuto
+    const interval = setInterval(checkSessionExpiration, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
   const regresarMenu = () => {
     limpiar();
     window.history.pushState(null, "", "/menu");
