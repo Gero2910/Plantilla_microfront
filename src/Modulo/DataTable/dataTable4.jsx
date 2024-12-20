@@ -45,10 +45,9 @@ const useStyle = createStyles(({ css, token }) => {
   };
 });
 
-const DataTable = ({ data }) => {
+const DataTable = ({ tabla, setExportExcelFunc }) => {
   const [customers, setCustomers] = useState([]);
   const [columns, setColumns] = useState([]);
-  /*filtros*/
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const [filteredData, setFilteredData] = useState([]);
@@ -56,57 +55,64 @@ const DataTable = ({ data }) => {
   const { styles } = useStyle();
 
   useEffect(() => {
-    if (data) {
-      const tipo = data.menu;
-      const plaza = data.plaza;
-      const desarrollo = data.desarrollo;
-      const etapa = data.etapa;
-      CargarListado(tipo, plaza, desarrollo, etapa);
+    if (tabla) {
+      CargarListado();
     }
-  }, [data]);
+  }, [tabla]);
 
-  const CargarListado = async (tipo, plaza, desarrollo, etapa) => {
-    let response;
-    try {
-      const conexiones = {
-        2: "listadoInventarioTierras",
-      };
-      const conexionKey = conexiones[tipo];
-      if (conexionKey) {
-        response = await conexion(conexionKey, { plaza, desarrollo, etapa });
-      } else {
-        console.error("Tipo de datos no soportado");
-        return;
-      }
-      let formattedData = response.map((item) => ({ ...item }));
-      formattedData = replaceNullWithZero(formattedData);
+  useEffect(() => {
+    if (setExportExcelFunc) {
+      setExportExcelFunc(() => exportExcel);
+    }
+  }, [setExportExcelFunc, customers, columns]);
 
-      setCustomers(formattedData);
-      setFilteredData(formattedData);
-      if (formattedData.length > 0) {
-        const generatedColumns = Object.keys(formattedData[0]).map((key) => ({
-          title: key.replace(/nom_/g, " ").toUpperCase(),
-          dataIndex: key,
-          key: key,
-          ...getColumnSearchProps(key),
-          onHeaderCell: () => ({
-            style: { whiteSpace: "nowrap" },
-          }),
-          width: 200,
-          ellipsis: true,
-          align:
-            detectDataType(formattedData, key) === "number"
-              ? "right"
-              : "center",
+  const CargarListado = async () => {
+    if (tabla) {
+      let response;
+      try {
+        const numCatalago = tabla;
+        const catalago = {
+          1: "cat_plazas",
+          2: "cat_desarrollo",
+          3: "cat_etapas",
+          4: "cat_prototipos",
+          5: "cat_condominios",
+        };
+        const catalagoKey = catalago[tabla];
+        response = await conexion("catalagos", numCatalago);
+        let formattedData = response[catalagoKey].map((item) => ({
+          ...item,
         }));
+        formattedData = replaceNullWithZero(formattedData);
 
-        setColumns(generatedColumns);
+        setCustomers(formattedData);
+        setFilteredData(formattedData);
+        if (formattedData.length > 0) {
+          const generatedColumns = Object.keys(formattedData[0]).map((key) => ({
+            title: key.replace(/nom_/g, " ").toUpperCase(),
+            dataIndex: key,
+            key: key,
+            ...getColumnSearchProps(key),
+            onHeaderCell: () => ({
+              style: { whiteSpace: "nowrap" },
+            }),
+            width: 200,
+            ellipsis: true,
+            align:
+              detectDataType(formattedData, key) === "number"
+                ? "right"
+                : "center",
+          }));
+
+          setColumns(generatedColumns);
+        }
+      } catch (error) {
+        console.error("Error al cargar el listado desarrollo etapa:", error);
       }
-    } catch (error) {
-      console.error("Error al cargar el listado desarrollo etapa:", error);
+    } else if (!tabla) {
+      return;
     }
   };
-
   const detectDataType = (data, key) => {
     const firstNonNullValue = data.find((item) => item[key] !== null)?.[key];
     return typeof firstNonNullValue === "number" ? "number" : "text";
@@ -129,6 +135,7 @@ const DataTable = ({ data }) => {
       confirm,
       clearFilters,
     }) => (
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
         <Input
           ref={searchInput}
@@ -217,7 +224,18 @@ const DataTable = ({ data }) => {
     setFilteredData(customers);
   }, [customers]);
 
+  const nombreExcel = () => {
+    const nombres = {
+      1: "cat_plazas",
+      2: "cat_desarrollo",
+      3: "cat_etapas",
+      4: "cat_prototipos",
+      5: "cat_condominios",
+    };
+    return nombres[tabla] || "Listado gastos";
+  };
   const exportExcel = () => {
+    const nombreArchivo = nombreExcel();
     const headers = columns.map((column) => column.title);
 
     const dataIndexes = columns.map((column) => column.dataIndex);
@@ -231,9 +249,9 @@ const DataTable = ({ data }) => {
 
     const worksheet = XLSX.utils.aoa_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Prueba");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tabla");
 
-    XLSX.writeFile(workbook, "prueba.xlsx");
+    XLSX.writeFile(workbook, `${nombreArchivo}.xlsx`);
   };
 
   return (
@@ -249,24 +267,11 @@ const DataTable = ({ data }) => {
             showSizeChanger: false,
             responsive: true,
           }}
-          scroll={{ x: "max-content", y: "calc(100vh - 200px)" }}
+          scroll={{ x: "max-content", y: "calc(95vh - 200px)" }}
           size="small"
           onChange={(pagination, filters, sorter, extra) => {
             setFilteredData(extra.currentDataSource);
           }}
-          title={() => (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginBottom: "10px",
-              }}
-            >
-              <Button icon={<FileExcelOutlined />} onClick={exportExcel}>
-                Exportar a Excel
-              </Button>
-            </div>
-          )}
           rowClassName={() => "custom-row"}
           locale={{ emptyText: "No se encontraron resultados" }}
         />

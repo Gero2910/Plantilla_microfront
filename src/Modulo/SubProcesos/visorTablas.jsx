@@ -1,22 +1,13 @@
 import React, { useState, useEffect } from "react";
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-  LeftCircleOutlined,
-} from "@ant-design/icons";
+import { UserOutlined, LeftCircleOutlined } from "@ant-design/icons";
 import { Button, Layout, Input, Divider, Typography } from "antd";
 import "./formato.css";
-import SubMenu from "../SubMenu/menu.jsx";
-import Proceso from "../SubProcesos/Proceso/proceso.jsx";
-const { Search } = Input;
+import Visor from "./procesos_2/proceso_2";
 const { Title } = Typography;
 
 const { Header, Content } = Layout;
 const App = () => {
-  const [userData, setUserData] = useState(null); // Estado para almacenar los datos del usuario
-  const [collapsed, setCollapsed] = useState(false);
-  const [selectedPage, setSelectedPage] = useState("1"); // almacena la pagina seleccionada
+  const [userData, setUserData] = useState(null);
   const [idPlaza, setIdPlaza] = useState(localStorage.getItem("plazaSelected"));
   const [idDesarrollo, setIdDesarrollo] = useState(
     localStorage.getItem("desarrolloSelected")
@@ -113,39 +104,18 @@ const App = () => {
 
     return () => clearInterval(interval);
   }, []);
+
   const regresarMenu = () => {
     limpiar();
     window.history.pushState(null, "", "/menu");
   };
 
   const limpiar = () => {
-    setCollapsed(false);
-    setSelectedPage("");
     setUserData(null);
-  };
-
-  const renderContent = () => {
-    switch (selectedPage) {
-      case "1":
-        return (
-          <Proceso
-            menu={selectedPage}
-            plaza={idPlaza}
-            desarrollo={idDesarrollo}
-            etapa={idEtapa}
-          />
-        );
-      default:
-        return <div>Seleccione una opción del menú</div>;
-    }
   };
 
   return (
     <Layout style={{ border: "none", height: "100vh" }}>
-      <SubMenu
-        collapsed={collapsed}
-        onSelectPage={(key) => setSelectedPage(key)}
-      />
       <Layout>
         <Header
           style={{
@@ -156,39 +126,41 @@ const App = () => {
             justifyContent: "space-between",
           }}
         >
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: "18px",
-              width: 64,
-              height: 64,
-              color: "#fff",
-            }}
-          />
+          {/* Contenedor vacío para ocupar espacio a la izquierda si es necesario */}
+          <div></div>
+
+          {/* Contenedor ajustado para alinear título y botón juntos al lado derecho */}
           <div
             style={{
               display: "flex",
               justifyContent: "flex-end",
-              alignItems: "center", // Centra verticalmente
-              marginRight: "15px", // Añadir margen derecho para separarlo del borde
+              alignItems: "center",
+              marginRight: "15px",
             }}
           >
             <Title
               level={3}
-              style={{ color: "white", margin: "0", fontSize: "13px" }}
+              style={{
+                color: "white",
+                margin: "0",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+              }}
             >
               <UserOutlined />
-              <Divider type="vertical" style={{ borderColor: "#FFF" }} />
-              {userData ? userData.nombre : "Cargando..."}{" "}
+              <Divider
+                type="vertical"
+                style={{ borderColor: "#FFF", margin: "0 10px" }}
+              />
+              {userData ? userData.nombre : "Cargando..."}
             </Title>
             <Button
               type="primary"
               icon={<LeftCircleOutlined />}
               onClick={regresarMenu}
               style={{ marginLeft: "20px" }}
-            ></Button>
+            />
           </div>
         </Header>
 
@@ -201,7 +173,7 @@ const App = () => {
             border: "none",
           }}
         >
-          {renderContent()}
+          <Visor plaza={idPlaza} desarrollo={idDesarrollo} etapa={idEtapa} />
         </Content>
       </Layout>
     </Layout>

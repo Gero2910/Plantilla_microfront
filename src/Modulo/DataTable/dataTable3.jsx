@@ -47,7 +47,7 @@ const useStyle = createStyles(({ css, token }) => {
     `,
   };
 });
-const DataTable = ({ idTablaSeleccionada }) => {
+const DataTable = ({ data }) => {
   const [columns, setColumns] = useState([]);
   const [dataSource, setDataSource] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -55,9 +55,9 @@ const DataTable = ({ idTablaSeleccionada }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (idTablaSeleccionada) {
-        // eslint-disable-next-line no-console
-        console.log(idTablaSeleccionada);
+      if (data) {
+        const tipo = data.menu;
+        CargarListado(tipo);
       }
     };
     fetchData();
